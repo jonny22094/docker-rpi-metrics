@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  influxdb:
+    restart: always
+    build:
+      context: ../
+      dockerfile: metrics/influxdb/Dockerfile
+    ports:
+      - "8086:8086"
+    volumes:
+      - ../:/usr/src/app
+      - influxdb-storage:/var/lib/influxdb
+    env_file:
+      - ./.env
+
+  telegraf:
+    restart: always
+    depends_on:
+      - influxdb
+    build:
+      context: ../
+      dockerfile: metrics/telegraf/Dockerfile
+    volumes:
+      - ../:/usr/src/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - ./.env
+
+  grafana:
+    restart: always
+    depends_on:
+      - influxdb
+      - telegraf
+    build:
+      context: ../
+      dockerfile: metrics/grafana/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../:/usr/src/app
+      - grafana-storage:/var/lib/grafana
+    env_file:
+      - ./.env
+
+volumes:
+  influxdb-storage:
+  grafana-storage:
